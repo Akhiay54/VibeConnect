@@ -1,0 +1,14 @@
+# Common ignores for Kotlin, Android, Ktor, IntelliJ
+*.iml
+.gradle
+/local.properties
+/.idea
+/build
+/.DS_Store
+*.log
+
+# Node (if applicable)
+node_modules/
+
+# Env
+.env

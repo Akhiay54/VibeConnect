@@ -1,0 +1,219 @@
+✅ Project Name: VibeConnect
+
+---
+
+### 🚀 Project Vision
+
+VibeConnect is a social networking platform designed to connect people through shared interests, groups, and events. Users can build a profile, connect with others, create and join groups, and discover or host events, fostering a community around common hobbies and passions.
+
+---
+
+### ⭐ Core Features (from Figma)
+
+*   **User Authentication:** Secure sign-up/sign-in with email, password reset, and email verification.
+*   **Social Logins:** Options for one-click registration/login via Google, Facebook, etc.
+*   **Rich User Profiles:** Customizable profiles with profile pictures, bios, status messages, and personal interests.
+*   **Connections:** Ability to send, accept, and manage connection requests between users.
+*   **Groups:** Users can create, join, manage, and discover public or private groups based on shared interests.
+*   **Events:** Functionality to create, find, and attend events, which can be linked to groups or be standalone.
+*   **Interactive Home Feed:** A central dashboard displaying updates like new events, group activities, and status messages.
+*   **Real-time Chat:** One-on-one instant messaging with connections.
+*   **Notifications:** A system to alert users of important activities like connection requests or group invites.
+
+---
+
+### 💻 Technology Stack
+
+*   **Backend:** Ktor, Kotlin
+*   **Database:** PostgreSQL
+*   **Architecture:** REST API
+*   **Frontend:** Kotlin Multiplatform (Compose)
+
+---
+
+### 🗄️ Detailed DB Schema (PostgreSQL)
+
+```sql
+-- Users & Authentication
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    profile_picture_url TEXT,
+    bio TEXT,
+    status_message VARCHAR(255),
+    dob DATE,
+    gender VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE password_resets (
+    email VARCHAR(255) PRIMARY KEY,
+    token TEXT NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL
+);
+
+-- Interests
+CREATE TABLE interests (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL
+);
+
+CREATE TABLE user_interests (
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    interest_id INTEGER REFERENCES interests(id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, interest_id)
+);
+
+-- Connections
+CREATE TABLE connections (
+    user_one_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    user_two_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    status VARCHAR(20) NOT NULL CHECK (status IN ('pending', 'accepted')), -- pending, accepted
+    action_user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_one_id, user_two_id)
+);
+
+-- Groups
+CREATE TABLE groups (
+    id SERIAL PRIMARY KEY,
+    creator_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    cover_photo_url TEXT,
+    is_public BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE group_members (
+    group_id INTEGER REFERENCES groups(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'member')), -- admin, member
+    joined_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (group_id, user_id)
+);
+
+-- Events, Notifications, Chat will be defined in Phase 3 & 4
+```
+
+---
+
+### 🗺️ REST API Endpoint Plan
+
+#### Phase 1: User & Auth (Complete)
+*   `POST /signUp`: Register a new user.
+*   `POST /signIn`: Authenticate and receive a JWT token.
+*   `GET /users/{id}`: Get a user's public profile.
+*   `GET /users`: Get a list of all users.
+*   `GET /me`: Get the authenticated user's own profile.
+*   `PUT /me`: Update the authenticated user's profile.
+
+#### Phase 2: Groups & Connections (Current Focus)
+*   **Groups**
+    *   `POST /groups`: Create a new group.
+    *   `GET /groups`: Get a list of all groups (discover).
+    *   `GET /groups/{id}`: Get detailed information about a single group.
+    *   `POST /groups/{id}/join`: Join a group.
+    *   `POST /groups/{id}/leave`: Leave a group.
+*   **Connections**
+    *   `POST /connections/request/{userId}`: Send a connection request.
+    *   `GET /connections/requests`: Get pending connection requests for the current user.
+    *   `POST /connections/accept/{userId}`: Accept a connection request.
+    *   `DELETE /connections/{userId}`: Remove a connection or decline a request.
+
+#### Phase 3: Events & Feed
+*   ... (to be defined)
+
+#### Phase 4: Chat & Notifications
+*   ... (to be defined)
+
+---
+
+### ✅ Progress & Current Status
+
+-   **Phase 1: User & Auth**
+    -   [x] Backend: Ktor server setup
+    -   [x] Backend: PostgreSQL database connected
+    -   [x] Backend: User registration (`/signUp`)
+    -   [x] Backend: User authentication (`/signIn`)
+    -   [x] Backend: User profile endpoints (`/me`, `/users/{id}`)
+-   **Phase 2: Groups & Connections**
+    -   [ ] Backend: Implement Groups & Connections schema and endpoints.
+-   **Frontend**
+    -   [ ] Kotlin Multiplatform project setup is complete, but no UI or logic has been built.
+
+---
+
+📁 GitHub Repository Structure
+
+vibeconnect/
+├── frontend/                         # Kotlin Multiplatform App (Compose)
+│   ├── androidApp/                   # Android-specific entry point
+│   ├── iosApp/                       # iOS entry (optional later)
+│   ├── shared/                       # Shared KMP logic (UI, network, db)
+│   │   ├── data/                     # Repositories, DTOs, API layer
+│   │   ├── domain/                   # UseCases, Models
+│   │   ├── presentation/             # ViewModels, Screens, Navigation
+│   │   ├── di/                       # Koin modules
+│   │   └── utils/                    # Common utils/constants
+│   └── build.gradle.kts              # Build setup
+│
+├── backend/                          # Ktor + REST + PostgreSQL
+│   ├── src/
+│   │   ├── main/kotlin/com/vibeconnect/
+│   │   │   ├── auth/                 # JWT auth logic (in plugins)
+│   │   │   ├── models/               # Data classes / ORM Entities
+│   │   │   ├── plugins/              # Ktor plugins (Routing, DB, Security)
+│   │   │   └── app.kt                # Main entry
+│   └── build.gradle.kts
+│
+├── README.md                         # Project overview & setup instructions
+├── .gitignore                        # Ignore build/ .idea/ etc.
+└── LICENSE                           # Optional MIT
+
+---
+
+🧠 DB Schema (PostgreSQL Draft)
+
+users (id, name, email, password_hash, dob, gender)
+interests (id, name)
+user_interests (user_id, interest_id)
+groups (id, title, description, creator_id, created_at)
+group_members (group_id, user_id)
+events (id, title, group_id, date, description, location)
+connections (user_id_1, user_id_2, status)
+notifications (id, user_id, message, created_at)
+
+---
+
+🧠 API Entry Points (REST)
+
+Queries (GET):
+- [x] /users - Get all users
+- [x] /users/{id} - Get user by ID
+- [x] /me - Get current authenticated user's profile
+- [ ] /groups - Get list of groups
+- [ ] /events?groupId={id} - Get events for a group
+- [ ] /users/explore - Explore other users
+
+Mutations (POST/PUT/DELETE):
+- [x] /signUp - Create a new user
+- [x] /signIn - Authenticate a user
+- [x] /me (PUT) - Update current authenticated user's profile
+- [ ] /groups (POST) - Create a new group
+- [ ] /events (POST) - Create a new event
+- [ ] /users/connect (POST) - Send connection request
+
+---
+
+✅ Notion Setup
+
+• Board: Tasks (To Do, In Progress, Done)
+• Docs: Feature list, Architecture, API Docs
+• Timeline: Weekly targets (3–4 week plan)
+
+---
+
+Let me know when you want me to generate boilerplate code or setup starter projects.
